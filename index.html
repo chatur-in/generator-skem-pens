@@ -290,7 +290,16 @@ async function makePDF(onP) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   const stage = document.createElement('div');
-  stage.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px';
+  stage.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px'; stage.id = 'pdfstage';
+  // Garis seragam di PDF: html2canvas tidak mendukung border-collapse (garis dalam tergambar 2x tebal) dan
+  // ketebalan pecahan (1.3/1.5px) jatuh ke piksel acak. Pakai 1.3333px = tepat 4px pada skala 3, garis kanan/bawah saja.
+  const st = document.createElement('style');
+  st.textContent = `#pdfstage .page{line-height:16px}
+#pdfstage .t1{line-height:18px}#pdfstage .t2{line-height:28px}
+#pdfstage .stmt{line-height:16px;border-width:1.3333px}
+#pdfstage table{border-collapse:separate;border-spacing:0;border-top:1.3333px solid #000;border-left:1.3333px solid #000}
+#pdfstage table td{border:0;border-right:1.3333px solid #000;border-bottom:1.3333px solid #000}`;
+  stage.appendChild(st);
   document.body.appendChild(stage);
   try {
     const pages = [...document.querySelectorAll('.page')];
