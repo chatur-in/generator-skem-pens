@@ -28,6 +28,7 @@ input:focus,select:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px 
 input[type=file]{padding:9px;border-style:dashed;border-color:#9fb8d6;background:var(--soft);cursor:pointer}
 input[type=file]::file-selector-button{margin-right:10px;border:0;background:var(--acc);color:#fff;border-radius:6px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row.nrp{grid-template-columns:132px 1fr}
 label.chk{display:flex;gap:8px;align-items:center;margin-top:12px;color:var(--ink);font-size:13px;font-weight:500}
 .chk input{width:auto;accent-color:var(--acc)}
 button{font:inherit;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid var(--acc);background:#fff;color:var(--acc);padding:10px 14px;transition:background .15s}
@@ -100,7 +101,7 @@ table{border-collapse:collapse;width:100%}
 <aside>
   <fieldset><legend>I. Identitas mahasiswa</legend>
     <label for="nama">Nama lengkap</label><input id="nama" value="Febrian Catur Wahyu Fibisono">
-    <div class="row"><div><label for="nrp">NRP</label><input id="nrp" value="3125600035"></div>
+    <div class="row nrp"><div><label for="nrp">NRP</label><input id="nrp" value="3125600035" maxlength="10" inputmode="numeric" pattern="[0-9]*"></div>
     <div><label for="prodi">Program studi</label><input id="prodi" value="S.Tr. Teknik Informatika"></div></div>
     <label for="dept">Departemen</label><input id="dept" value="Departemen Teknik Informatika dan Komputer">
   </fieldset>
