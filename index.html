@@ -46,6 +46,14 @@ main{min-width:0;background:var(--soft);border:1px solid var(--line);border-radi
 .lbl{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--acc2);margin:0 0 14px;border-left:4px solid var(--yel);padding-left:8px}
 .pv{margin:0 auto 18px;box-shadow:0 6px 22px rgba(23,70,121,.18);background:#fff;overflow:hidden}
 .pv .page{transform-origin:0 0}
+.ov{position:fixed;inset:0;background:rgba(20,48,79,.45);display:none;place-items:center;z-index:100;padding:20px}
+.ov.on{display:grid}
+.ov .box{background:#fff;border-radius:16px;padding:26px 34px 24px;text-align:center;width:min(320px,100%);box-shadow:0 12px 40px rgba(20,48,79,.35)}
+.spin{width:46px;height:46px;margin:0 auto 14px;border-radius:50%;border:4px solid #dbe7f5;border-top-color:var(--acc);border-right-color:var(--yel);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ov b{display:block;font-size:15px}.ov small{color:var(--mute);font-size:12.5px}
+.bar{height:6px;background:#e3ebf5;border-radius:6px;overflow:hidden;margin-top:14px}
+.bar i{display:block;height:100%;width:0;background:var(--yel);transition:width .3s}
 /* Kertas A4 */
 .page{width:794px;height:1123px;background:#fff;color:#000;font:12px/1.35 Arial,Helvetica,sans-serif;position:relative;padding:60px 44px 0 44px}
 .frame{position:absolute;left:44px;right:44px;top:44px;bottom:44px;border:2px solid #000;border-radius:2px}
@@ -122,6 +130,7 @@ table{border-collapse:collapse;width:100%}
 </main>
 </div>
 
+<div class="ov" id="ov" role="status" aria-live="polite"><div class="box"><div class="spin"></div><b id="ovtxt">Menyiapkan dokumen…</b><small>Mohon tunggu, jangan tutup halaman ini.</small><div class="bar"><i id="ovbar"></i></div></div></div>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -253,7 +262,7 @@ $('files').addEventListener('change', async e => {
 [...ids, 'kosongTgl'].forEach(i => $(i).addEventListener('input', render));
 window.addEventListener('resize', fit);
 
-async function makePDF() {
+async function makePDF(onP) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   const stage = document.createElement('div');
@@ -262,6 +271,7 @@ async function makePDF() {
   try {
     const pages = [...document.querySelectorAll('.page')];
     for (let n = 1; n <= pages.length; n++) {
+      onP && onP(n, pages.length); await new Promise(r => setTimeout(r, 40));
       const c = pages[n-1].cloneNode(true); c.style.transform = 'none'; stage.appendChild(c);
       const cv = await html2canvas(c, { scale: 2, backgroundColor: '#fff', useCORS: true });
       if (n > 1) pdf.addPage();
@@ -271,11 +281,16 @@ async function makePDF() {
   return pdf;
 }
 
+const setProg = (f, t) => { $('ovbar').style.width = Math.round(f * 100) + '%'; $('ovtxt').textContent = t; };
 $('dl').onclick = async () => {
-  $('dl').disabled = true; $('msg').textContent = 'Membuat PDF…';
-  try { const pdf = await makePDF(); pdf.save(`Formulir_SKEM_${$('nrp').value.trim() || 'mahasiswa'}.pdf`); $('msg').textContent = 'PDF berhasil dibuat.'; }
-  catch (e) { $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.'; }
-  $('dl').disabled = false;
+  $('dl').disabled = true; $('ov').classList.add('on'); setProg(0.03, 'Menyiapkan dokumen…'); $('msg').textContent = '';
+  try {
+    const pdf = await makePDF((n, t) => setProg(0.08 + 0.84 * (n - 1) / t, 'Membuat halaman ' + n + ' dari ' + t + '…'));
+    setProg(1, 'Menyimpan file…'); await new Promise(r => setTimeout(r, 300));
+    pdf.save('Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + '.pdf');
+    $('msg').textContent = 'PDF berhasil dibuat.';
+  } catch (e) { $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.'; }
+  $('ov').classList.remove('on'); $('dl').disabled = false;
 };
 $('pr').onclick = () => {
   const w = window.open('', '_blank');
