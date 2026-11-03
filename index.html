@@ -277,9 +277,18 @@ $('files').addEventListener('change', async e => {
 [...ids, 'kosongTgl'].forEach(i => $(i).addEventListener('input', render));
 window.addEventListener('resize', fit);
 
+async function svgToPNG(sv, w, h) {
+  const k = 4, x = sv.cloneNode(true);
+  x.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); x.setAttribute('width', w * k); x.setAttribute('height', h * k);
+  const img = new Image();
+  await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(x)); });
+  const cv = document.createElement('canvas'); cv.width = w * k; cv.height = h * k;
+  cv.getContext('2d').drawImage(img, 0, 0, w * k, h * k);
+  return cv.toDataURL('image/png');
+}
 async function makePDF(onP) {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   const stage = document.createElement('div');
   stage.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px';
   document.body.appendChild(stage);
@@ -288,9 +297,17 @@ async function makePDF(onP) {
     for (let n = 1; n <= pages.length; n++) {
       onP && onP(n, pages.length); await new Promise(r => setTimeout(r, 40));
       const c = pages[n-1].cloneNode(true); c.style.transform = 'none'; stage.appendChild(c);
-      const cv = await html2canvas(c, { scale: 2, backgroundColor: '#fff', useCORS: true });
+      // html2canvas sering salah menggambar SVG (logo jadi miring/terdistorsi) -> ganti dengan gambar PNG persegi
+      for (const sv of c.querySelectorAll('svg')) {
+        const w = parseFloat(sv.getAttribute('width')) || 92, h = parseFloat(sv.getAttribute('height')) || 92;
+        const im = new Image(); im.src = await svgToPNG(sv, w, h);
+        im.width = w; im.height = h;
+        im.style.cssText = 'display:block;margin:0 auto;width:' + w + 'px;height:' + h + 'px;object-fit:contain';
+        sv.replaceWith(im);
+      }
+      const cv = await html2canvas(c, { scale: 3, backgroundColor: '#fff', useCORS: true });
       if (n > 1) pdf.addPage();
-      pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+      pdf.addImage(cv.toDataURL('image/jpeg', 0.8), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
     }
   } finally { stage.remove(); }
   return pdf;
