@@ -56,10 +56,13 @@ main{min-width:0;background:var(--soft);border:1px solid var(--line);border-radi
 @keyframes sp{to{transform:rotate(360deg)}}
 @keyframes pulse{50%{transform:scale(.86);opacity:.75}}
 @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
-.ring .ck{display:none}
-.ovbox.done .ring::before{animation:none;background:var(--yel)}
-.ovbox.done .ring .lg{display:none}
-.ovbox.done .ring .ck{display:block;animation:pop .45s cubic-bezier(.2,.9,.3,1.4)}
+.ring .ck{display:none;position:absolute;inset:0;width:88px;height:88px}
+.ck .c-tick{fill:none;stroke:var(--acc);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:70;stroke-dashoffset:70}
+.ovbox.done .ring::before{opacity:0;transition:opacity .2s}
+.ovbox.done .ring .lg,.ovbox.done #ovlogo{display:none}
+.ovbox.done .ring .ck{display:block}
+.ovbox.done .ck .c-tick{animation:drawt .45s .1s ease-out forwards}
+@keyframes drawt{to{stroke-dashoffset:0}}
 .ov b{display:block;font-size:15.5px}.ov small{color:var(--mute);font-size:12.5px}
 .bar{height:8px;background:#e6edf6;border-radius:8px;overflow:hidden;margin-top:16px}
 .bar i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--acc),var(--yel));border-radius:8px}
@@ -142,7 +145,7 @@ table{border-collapse:collapse;width:100%}
 </main>
 </div>
 
-<div class="ov" id="ov" role="status" aria-live="polite"><div class="ovbox"><div class="ring"><span id="ovlogo"></span><svg class="ck" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><b id="ovtxt">Menyiapkan dokumen…</b><small>Mohon tunggu, jangan tutup halaman ini.</small><div class="bar"><i id="ovbar"></i></div><div class="steps" id="ovsteps"></div></div></div>
+<div class="ov" id="ov" role="status" aria-live="polite"><div class="ovbox"><div class="ring"><span id="ovlogo"></span><svg class="ck" viewBox="0 0 88 88"><path class="c-tick" d="M22 46l15 15 29-32"/></svg></div><b id="ovtxt">Menyiapkan dokumen…</b><small>Mohon tunggu, jangan tutup halaman ini.</small><div class="bar"><i id="ovbar"></i></div><div class="steps" id="ovsteps"></div></div></div>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
