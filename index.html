@@ -46,14 +46,26 @@ main{min-width:0;background:var(--soft);border:1px solid var(--line);border-radi
 .lbl{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--acc2);margin:0 0 14px;border-left:4px solid var(--yel);padding-left:8px}
 .pv{margin:0 auto 18px;box-shadow:0 6px 22px rgba(23,70,121,.18);background:#fff;overflow:hidden}
 .pv .page{transform-origin:0 0}
-.ov{position:fixed;inset:0;background:rgba(20,48,79,.45);display:none;place-items:center;z-index:100;padding:20px}
-.ov.on{display:grid}
-.ov .box{background:#fff;border-radius:16px;padding:26px 34px 24px;text-align:center;width:min(320px,100%);box-shadow:0 12px 40px rgba(20,48,79,.35)}
-.spin{width:46px;height:46px;margin:0 auto 14px;border-radius:50%;border:4px solid #dbe7f5;border-top-color:var(--acc);border-right-color:var(--yel);animation:sp .8s linear infinite}
+.ov{position:fixed;inset:0;background:rgba(20,48,79,.5);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:100;padding:20px;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.ov.on{opacity:1;visibility:visible}
+.ov .box{background:#fff;border-radius:20px;padding:28px 30px 24px;text-align:center;width:min(340px,100%);box-shadow:0 20px 50px rgba(20,48,79,.4);transform:translateY(14px) scale(.96);transition:transform .35s cubic-bezier(.2,.9,.3,1.2)}
+.ov.on .box{transform:none}
+.ring{position:relative;width:88px;height:88px;margin:0 auto 16px;display:grid;place-items:center}
+.ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0 25%,var(--acc) 25% 70%,var(--yel) 70% 100%);-webkit-mask:radial-gradient(circle,transparent 36px,#000 37px);mask:radial-gradient(circle,transparent 36px,#000 37px);animation:sp 1s linear infinite}
+.ring .lg{animation:pulse 1.4s ease-in-out infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.ov b{display:block;font-size:15px}.ov small{color:var(--mute);font-size:12.5px}
-.bar{height:6px;background:#e3ebf5;border-radius:6px;overflow:hidden;margin-top:14px}
-.bar i{display:block;height:100%;width:0;background:var(--yel);transition:width .3s}
+@keyframes pulse{50%{transform:scale(.86);opacity:.75}}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.ring .ck{display:none}
+.box.done .ring::before{animation:none;background:var(--yel)}
+.box.done .ring .lg{display:none}
+.box.done .ring .ck{display:block;animation:pop .45s cubic-bezier(.2,.9,.3,1.4)}
+.ov b{display:block;font-size:15.5px}.ov small{color:var(--mute);font-size:12.5px}
+.bar{height:8px;background:#e6edf6;border-radius:8px;overflow:hidden;margin-top:16px}
+.bar i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--acc),var(--yel));border-radius:8px}
+.steps{display:flex;gap:7px;justify-content:center;margin-top:13px;min-height:9px}
+.steps span{width:9px;height:9px;border-radius:50%;background:#d5e0ee;transition:background .3s,transform .3s}
+.steps .cur{background:var(--acc);transform:scale(1.3)}.steps .done{background:var(--yel)}
 /* Kertas A4 */
 .page{width:794px;height:1123px;background:#fff;color:#000;font:12px/1.35 Arial,Helvetica,sans-serif;position:relative;padding:60px 44px 0 44px}
 .frame{position:absolute;left:44px;right:44px;top:44px;bottom:44px;border:2px solid #000;border-radius:2px}
@@ -130,7 +142,7 @@ table{border-collapse:collapse;width:100%}
 </main>
 </div>
 
-<div class="ov" id="ov" role="status" aria-live="polite"><div class="box"><div class="spin"></div><b id="ovtxt">Menyiapkan dokumen…</b><small>Mohon tunggu, jangan tutup halaman ini.</small><div class="bar"><i id="ovbar"></i></div></div></div>
+<div class="ov" id="ov" role="status" aria-live="polite"><div class="box"><div class="ring"><span id="ovlogo"></span><svg class="ck" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><b id="ovtxt">Menyiapkan dokumen…</b><small>Mohon tunggu, jangan tutup halaman ini.</small><div class="bar"><i id="ovbar"></i></div><div class="steps" id="ovsteps"></div></div></div>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -281,14 +293,25 @@ async function makePDF(onP) {
   return pdf;
 }
 
-const setProg = (f, t) => { $('ovbar').style.width = Math.round(f * 100) + '%'; $('ovtxt').textContent = t; };
+const setProg = (f, t, ms) => { const b = $('ovbar'); b.style.transition = 'transform ' + (ms || 0) + 'ms linear'; b.style.transform = 'scaleX(' + f + ')'; if (t) $('ovtxt').textContent = t; };
+const setSteps = (n, t) => { $('ovsteps').innerHTML = Array.from({ length: t }, (_, i) => '<span class="' + (i + 1 < n ? 'done' : i + 1 === n ? 'cur' : '') + '"></span>').join(''); };
 $('dl').onclick = async () => {
-  $('dl').disabled = true; $('ov').classList.add('on'); setProg(0.03, 'Menyiapkan dokumen…'); $('msg').textContent = '';
+  const box = $('ov').firstElementChild; box.classList.remove('done');
+  $('dl').disabled = true; $('msg').textContent = '';
+  setProg(0, 'Menyiapkan dokumen…', 0); $('ovsteps').innerHTML = ''; $('ov').classList.add('on');
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  let est = 1600, last = performance.now();
   try {
-    const pdf = await makePDF((n, t) => setProg(0.08 + 0.84 * (n - 1) / t, 'Membuat halaman ' + n + ' dari ' + t + '…'));
-    setProg(1, 'Menyimpan file…'); await new Promise(r => setTimeout(r, 300));
+    const pdf = await makePDF((n, t) => {
+      const now = performance.now(); if (n > 1) est = now - last; last = now;
+      setSteps(n, t); setProg(0.08 + 0.86 * n / t, 'Membuat halaman ' + n + ' dari ' + t, est);
+    });
+    setProg(1, 'Menyimpan file…', 250); await new Promise(r => setTimeout(r, 300));
     pdf.save('Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + '.pdf');
+    box.classList.add('done'); $('ovtxt').textContent = 'PDF berhasil diunduh';
+    $('ovsteps').querySelectorAll('span').forEach(s => s.className = 'done');
     $('msg').textContent = 'PDF berhasil dibuat.';
+    await new Promise(r => setTimeout(r, 1200));
   } catch (e) { $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.'; }
   $('ov').classList.remove('on'); $('dl').disabled = false;
 };
@@ -301,6 +324,7 @@ $('pr').onclick = () => {
 };
 
 $('hicon').innerHTML = LOGO.replace('width="92" height="92"', 'width="30" height="30"');
+$('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" height="46" class="lg"');
 thumbs(); render();
 </script>
 </body>
