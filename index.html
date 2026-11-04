@@ -55,6 +55,10 @@ main{min-width:0;background:var(--soft);border:1px solid var(--line);border-radi
 .ov.on{opacity:1;visibility:visible}
 .ov .ovbox{background:#fff;border-radius:20px;padding:28px 30px 24px;text-align:center;width:min(340px,100%);box-shadow:0 20px 50px rgba(20,48,79,.4);transform:translateY(14px) scale(.96);transition:transform .35s cubic-bezier(.2,.9,.3,1.2)}
 .ov.on .ovbox{transform:none}
+.ttdbox{display:flex;align-items:center;gap:10px;margin-top:8px}
+.ttdprev{width:150px;height:60px;border:1px dashed var(--line);border-radius:8px;display:grid;place-items:center;background:#fff;overflow:hidden;font-size:12px;color:#000}
+.ttdprev img{max-width:100%;max-height:100%;display:block}
+.ttdbox button{padding:6px 12px;font-size:13px}
 .qbox{text-align:left!important;width:min(400px,100%)!important}
 .qbox>b{display:block;font-size:17px;color:#000}.qbox>small{display:block;color:#000;font-size:12.5px;margin:2px 0 12px}
 .opt{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer;color:#000;font-size:14px;font-weight:400;transition:border-color .15s,background .15s}
@@ -98,7 +102,9 @@ table{border-collapse:collapse;width:100%}
 .ttl{text-align:center;font-weight:700;margin:12px 0 0;font-size:13px}
 .stmt{border:1.3px solid #000;padding:8px 10px;font-size:11px;text-align:justify;line-height:1.45}
 .ttd{text-align:center;margin:16px 0 0}
-.nm{text-align:center;margin:72px 0 0}
+.sgn{height:72px;display:flex;align-items:flex-end;justify-content:center}
+.sgn img{max-height:66px;max-width:220px;display:block;margin-bottom:2px}
+.nm{text-align:center;margin:0}
 .foot{position:absolute;left:44px;bottom:14px;font-size:11px}
 .box{display:inline-block;width:12px;height:12px;border:1px solid #000;vertical-align:-2px;margin-right:4px;text-align:center;line-height:10px;font-size:11px}
 .att{position:relative;margin:0 18px;height:945px;border:1px dashed #bbb;border-radius:4px;padding:6px;display:grid;gap:8px;align-items:center;justify-items:center}
@@ -146,6 +152,11 @@ table{border-collapse:collapse;width:100%}
     <div class="row"><div><label for="kota">Kota</label><input id="kota" value="Surabaya"></div>
     <div><label for="ttgl">Tanggal surat</label><input id="ttgl" type="date"></div></div>
     <label class="chk"><input type="checkbox" id="kosongTgl"> Kosongkan tanggal (isi tangan)</label>
+    <label for="ttdFile">Tanda tangan digital</label>
+    <input type="file" id="ttdFile" accept="image/*,.heic,.heif,.pdf">
+    <div class="ttdbox"><div class="ttdprev" id="ttdPrev"><span>Belum ada</span></div><button type="button" id="ttdDel" style="display:none">Hapus</button></div>
+    <label class="chk"><input type="checkbox" id="ttdBg" checked> Hapus latar putih otomatis</label>
+    <div class="hint">Foto atau scan tanda tangan di kertas putih. Tersimpan hanya di browser ini.</div>
   </fieldset>
 
   <button class="main" id="dl">Unduh PDF</button>
@@ -176,6 +187,7 @@ const fmt = v => { if (!v) return ''; const [y,m,d] = v.split('-').map(Number); 
 const ids = ['nama','nrp','prodi','prodiLain','dept','deptLain','kegiatan','tgl','lokasi','penyelenggara','jenis','jenisLain','vnama','vjab','vtgl','kota','ttgl'];
 let images = [];
 const dims = new Map();
+let ttdRaw = '', ttdImg = '';
 const land = s => { const d = dims.get(s); return !!d && d[0] > d[1]; };
 // Landscape: maks. 2 per halaman (atas-bawah). Portrait: 1 per halaman.
 function paginate() {
@@ -228,6 +240,7 @@ function render() {
   <div class="sec">IV. Pernyataan Mahasiswa</div>
   <div class="stmt">Saya menyatakan bahwa seluruh data dan dokumen yang saya lampirkan adalah benar dan dapat dipertanggungjawabkan. Apabila di kemudian hari ditemukan ketidaksesuaian, pemalsuan, atau manipulasi data, saya bersedia menerima konsekuensi sesuai ketentuan yang berlaku, termasuk pembatalan pengajuan SKEM serta sanksi akademik atau administratif dari institusi.</div>
   <div class="ttd">${esc(v.kota)}, ${surat}</div>
+  <div class="sgn">${ttdImg ? `<img src="${ttdImg}" alt="Tanda tangan">` : ''}</div>
   <div class="nm">(${esc(v.nama)})<br>(${esc(v.nrp)})</div>
   </div><div class="foot">Pedoman SKEM 2025 – Politeknik Elektronika Negeri Surabaya</div>`;
 
@@ -451,6 +464,42 @@ $('pr').onclick = () => {
 
 $('hicon').innerHTML = LOGO.replace('width="92" height="92"', 'width="30" height="30"');
 $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" height="46" class="lg"');
+// ---- Tanda tangan digital ----
+async function buildTtd() {
+  if (!ttdRaw) { ttdImg = ''; return; }
+  const im = new Image(); await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = ttdRaw; });
+  const k = Math.min(1, 700 / im.naturalWidth), w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
+  let c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
+  if ($('ttdBg').checked) {
+    const d = x.getImageData(0, 0, w, h), a = d.data; let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let i = 0, p = 0; i < a.length; i += 4, p++) {
+      const l = .299 * a[i] + .587 * a[i + 1] + .114 * a[i + 2];
+      const al = l >= 225 ? 0 : l <= 150 ? 255 : Math.round(255 * (225 - l) / 75);
+      a[i + 3] = al;
+      if (al > 20) { const px = p % w, py = (p / w) | 0; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
+    }
+    x.putImageData(d, 0, 0);
+    if (x1 >= x0 && y1 >= y0) { // potong ruang kosong di sekeliling tanda tangan
+      x0 = Math.max(0, x0 - 4); y0 = Math.max(0, y0 - 4); x1 = Math.min(w - 1, x1 + 4); y1 = Math.min(h - 1, y1 + 4);
+      const c2 = document.createElement('canvas'); c2.width = x1 - x0 + 1; c2.height = y1 - y0 + 1;
+      c2.getContext('2d').drawImage(c, x0, y0, c2.width, c2.height, 0, 0, c2.width, c2.height); c = c2;
+    }
+  }
+  ttdImg = c.toDataURL('image/png');
+}
+function ttdUI() { $('ttdPrev').innerHTML = ttdImg ? '<img src="' + ttdImg + '" alt="Pratinjau tanda tangan">' : '<span>Belum ada</span>'; $('ttdDel').style.display = ttdImg ? '' : 'none'; }
+function ttdSave() { try { localStorage.setItem('skem_ttd', JSON.stringify({ raw: ttdRaw, bg: $('ttdBg').checked })); } catch (e) {} }
+$('ttdFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  $('msg').textContent = 'Memproses tanda tangan…';
+  try { ttdRaw = (await handle(f))[0]; await buildTtd(); ttdSave(); ttdUI(); render(); $('msg').textContent = ''; }
+  catch (err) { $('msg').textContent = 'Tanda tangan tidak bisa dibaca. Coba simpan ulang sebagai JPG atau PNG.'; }
+});
+$('ttdBg').addEventListener('change', async () => { try { await buildTtd(); } catch (e) {} ttdSave(); ttdUI(); render(); });
+$('ttdDel').onclick = () => { ttdRaw = ''; ttdImg = ''; ttdSave(); ttdUI(); render(); };
+(async () => { try { const s = JSON.parse(localStorage.getItem('skem_ttd') || 'null'); if (s && s.raw) { ttdRaw = s.raw; $('ttdBg').checked = s.bg !== false; await buildTtd(); ttdUI(); render(); } } catch (e) {} })();
+
 thumbs(); render();
 </script>
 </body>
