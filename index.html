@@ -415,6 +415,12 @@ function rotateMsgs() {
   const id = setInterval(() => { if (i < MSGS.length - 1) { $('ovtxt').textContent = MSGS[++i]; setSteps(i + 1, MSGS.length); } }, 2200);
   return () => clearInterval(id);
 }
+// Nama file: Formulir_SKEM_NRP_X, X = kata pertama nama kegiatan
+function pdfName() {
+  const clean = w => w.replace(/[^\p{L}\p{N}]/gu, '');
+  const first = $('kegiatan').value.trim().split(/\s+/).map(clean).find(Boolean);
+  return 'Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + (first ? '_' + first : '') + '.pdf';
+}
 let cache = null;
 const closeOv = () => $('ov').classList.remove('on');
 $('dl').onclick = async () => {
@@ -455,7 +461,7 @@ $('qgo').onclick = async () => {
   try {
     setProg(0.9, 'Menyimpan file…', 350);
     const pdf = buildPDF(imgs); await new Promise(r => setTimeout(r, 380));
-    pdf.save('Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + '.pdf');
+    pdf.save(pdfName());
     setProg(1, '', 100);
     box.classList.add('done'); $('ovtxt').textContent = 'PDF berhasil diunduh (' + fmtSize(bytesOf(imgs)) + ')';
     $('msg').textContent = 'PDF berhasil dibuat.';
