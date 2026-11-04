@@ -55,7 +55,6 @@ main{min-width:0;background:var(--soft);border:1px solid var(--line);border-radi
 .ov.on{opacity:1;visibility:visible}
 .ov .ovbox{background:#fff;border-radius:20px;padding:28px 30px 24px;text-align:center;width:min(340px,100%);box-shadow:0 20px 50px rgba(20,48,79,.4);transform:translateY(14px) scale(.96);transition:transform .35s cubic-bezier(.2,.9,.3,1.2)}
 .ov.on .ovbox{transform:none}
-#ovtxt{transition:opacity .18s ease}
 .qbox{text-align:left!important;width:min(400px,100%)!important}
 .qbox>b{display:block;font-size:17px;color:#000}.qbox>small{display:block;color:#000;font-size:12.5px;margin:2px 0 12px}
 .opt{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer;color:#000;font-size:14px;font-weight:400;transition:border-color .15s,background .15s}
@@ -386,12 +385,11 @@ const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') +
 
 const setProg = (f, t, ms) => { const b = $('ovbar'); b.style.transition = 'transform ' + (ms || 0) + 'ms linear'; b.style.transform = 'scaleX(' + f + ')'; if (t) $('ovtxt').textContent = t; };
 const setSteps = (n, t) => { $('ovsteps').innerHTML = Array.from({ length: t }, (_, i) => '<span class="' + (i + 1 < n ? 'done' : i + 1 === n ? 'cur' : '') + '"></span>').join(''); };
-// Teks proses berganti-ganti (berhenti di pesan terakhir kalau proses masih berjalan)
-const MSGS = ['Menyiapkan dokumen…', 'Menyusun halaman formulir…', 'Merapikan tabel dan garis…', 'Memasang logo PENS…', 'Menata lampiran foto…', 'Menajamkan gambar…', 'Menghitung ukuran file…', 'Hampir selesai…'];
-function setTxt(t) { const e = $('ovtxt'); e.style.opacity = 0; setTimeout(() => { e.textContent = t; e.style.opacity = 1; }, 180); }
+// Teks proses berganti sederhana (berhenti di pesan terakhir kalau proses masih berjalan)
+const MSGS = ['Menyiapkan dokumen…', 'Menyusun halaman…', 'Hampir selesai…'];
 function rotateMsgs() {
   let i = 0; $('ovtxt').textContent = MSGS[0];
-  const id = setInterval(() => { if (i < MSGS.length - 1) setTxt(MSGS[++i]); }, 1500);
+  const id = setInterval(() => { if (i < MSGS.length - 1) $('ovtxt').textContent = MSGS[++i]; }, 2200);
   return () => clearInterval(id);
 }
 let cache = null;
