@@ -388,8 +388,8 @@ const setSteps = (n, t) => { $('ovsteps').innerHTML = Array.from({ length: t }, 
 // Teks proses berganti sederhana (berhenti di pesan terakhir kalau proses masih berjalan)
 const MSGS = ['Menyiapkan dokumen…', 'Menyusun halaman…', 'Hampir selesai…'];
 function rotateMsgs() {
-  let i = 0; $('ovtxt').textContent = MSGS[0];
-  const id = setInterval(() => { if (i < MSGS.length - 1) $('ovtxt').textContent = MSGS[++i]; }, 2200);
+  let i = 0; $('ovtxt').textContent = MSGS[0]; setSteps(1, MSGS.length);
+  const id = setInterval(() => { if (i < MSGS.length - 1) { $('ovtxt').textContent = MSGS[++i]; setSteps(i + 1, MSGS.length); } }, 2200);
   return () => clearInterval(id);
 }
 let cache = null;
@@ -404,7 +404,7 @@ $('dl').onclick = async () => {
   try {
     cache = await renderPages((n, t) => {
       const now = performance.now(); if (n > 1) est = now - last; last = now;
-      setSteps(n, t); setProg(0.08 + 0.86 * n / t, '', est);
+      setProg(0.08 + 0.86 * n / t, '', est);
     });
   } catch (e) {
     stopMsg(); $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.';
@@ -427,7 +427,7 @@ $('qgo').onclick = async () => {
   try { localStorage.setItem('skemq', key); } catch (e) {}
   $('qov').classList.remove('on');
   const box = $('ov').firstElementChild; box.classList.remove('done');
-  setProg(0, 'Menyimpan file…', 0); $('ovsteps').innerHTML = ''; $('ov').classList.add('on');
+  setProg(0, 'Menyimpan file…', 0); setSteps(MSGS.length + 1, MSGS.length); $('ov').classList.add('on');
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   try {
     setProg(0.9, 'Menyimpan file…', 350);
