@@ -148,10 +148,11 @@ table{border-collapse:collapse;width:100%}
     <label for="vnama">Nama verifikator</label><input id="vnama" placeholder="Contoh: Prof. Iwan Syarif">
     <label for="vjab">Jabatan</label><input id="vjab" placeholder="Contoh: Dosen Wali">
     <label for="vtgl">Tanggal verifikasi</label><input id="vtgl" type="date">
-    <label for="vttdFile">Tanda tangan digital verifikator</label>
+    <label for="vttdFile">Tanda tangan digital verifikator (opsional)</label>
     <input type="file" id="vttdFile" accept="image/*,.heic,.heif,.pdf">
     <div class="ttdbox"><div class="ttdprev" id="vttdPrev"><span>Belum ada</span></div><button type="button" id="vttdDel" style="display:none">Hapus</button></div>
     <label class="chk"><input type="checkbox" id="vttdBg" checked> Hapus latar putih otomatis</label>
+    <label class="chk" id="vttdOnL" style="display:none"><input type="checkbox" id="vttdOn" checked> Tampilkan di dokumen</label>
     <div class="hint">Opsional. Kosongkan jika verifikator akan tanda tangan langsung.</div>
   </fieldset>
 
@@ -159,11 +160,12 @@ table{border-collapse:collapse;width:100%}
     <div class="row"><div><label for="kota">Kota</label><input id="kota" value="Surabaya"></div>
     <div><label for="ttgl">Tanggal surat</label><input id="ttgl" type="date"></div></div>
     <label class="chk"><input type="checkbox" id="kosongTgl"> Kosongkan tanggal (isi tangan)</label>
-    <label for="ttdFile">Tanda tangan digital</label>
+    <label for="ttdFile">Tanda tangan digital (opsional)</label>
     <input type="file" id="ttdFile" accept="image/*,.heic,.heif,.pdf">
     <div class="ttdbox"><div class="ttdprev" id="ttdPrev"><span>Belum ada</span></div><button type="button" id="ttdDel" style="display:none">Hapus</button></div>
     <label class="chk"><input type="checkbox" id="ttdBg" checked> Hapus latar putih otomatis</label>
-    <div class="hint">Foto atau scan tanda tangan di kertas putih. Tersimpan hanya di browser ini.</div>
+    <label class="chk" id="ttdOnL" style="display:none"><input type="checkbox" id="ttdOn" checked> Tampilkan di dokumen</label>
+    <div class="hint">Opsional. Lewati jika ingin tanda tangan langsung di kertas. Tersimpan hanya di browser ini.</div>
   </fieldset>
 
   <button class="main" id="dl">Unduh PDF</button>
@@ -194,7 +196,8 @@ const fmt = v => { if (!v) return ''; const [y,m,d] = v.split('-').map(Number); 
 const ids = ['nama','nrp','prodi','prodiLain','dept','deptLain','kegiatan','tgl','lokasi','penyelenggara','jenis','jenisLain','vnama','vjab','vtgl','kota','ttgl'];
 let images = [];
 const dims = new Map();
-const sigs = { ttd: { raw: '', img: '' }, vttd: { raw: '', img: '' } }; // tanda tangan mahasiswa & verifikator
+const sigs = { ttd: { raw: '', img: '', on: true }, vttd: { raw: '', img: '', on: true } };
+const sigSrc = p => sigs[p].on !== false ? sigs[p].img : ''; // tanda tangan mahasiswa & verifikator
 const land = s => { const d = dims.get(s); return !!d && d[0] > d[1]; };
 // Landscape: maks. 2 per halaman (atas-bawah). Portrait: 1 per halaman.
 function paginate() {
@@ -243,11 +246,11 @@ function render() {
   <div class="sec">III. Verifikasi</div>
   <table class="f">${row('Nama Verifikator',v.vnama)}${row('Jabatan',v.vjab)}${row('Tanggal Verifikasi',fmt(v.vtgl))}
     <tr><td class="k">Keputusan</td><td class="c">:</td><td>${box(false)} Disetujui &nbsp;&nbsp;&nbsp;&nbsp; ${box(false)} Ditolak</td></tr>
-    <tr class="tall" style="height:62px"><td class="k">Tanda Tangan<br>Verifikator</td><td class="c">:</td><td class="vsg">${sigs.vttd.img ? `<img src="${sigs.vttd.img}" alt="Tanda tangan verifikator">` : ''}</td></tr></table>
+    <tr class="tall" style="height:62px"><td class="k">Tanda Tangan<br>Verifikator</td><td class="c">:</td><td class="vsg">${sigSrc('vttd') ? `<img src="${sigSrc('vttd')}" alt="Tanda tangan verifikator">` : ''}</td></tr></table>
   <div class="sec">IV. Pernyataan Mahasiswa</div>
   <div class="stmt">Saya menyatakan bahwa seluruh data dan dokumen yang saya lampirkan adalah benar dan dapat dipertanggungjawabkan. Apabila di kemudian hari ditemukan ketidaksesuaian, pemalsuan, atau manipulasi data, saya bersedia menerima konsekuensi sesuai ketentuan yang berlaku, termasuk pembatalan pengajuan SKEM serta sanksi akademik atau administratif dari institusi.</div>
   <div class="ttd">${esc(v.kota)}, ${surat}</div>
-  <div class="sgn">${sigs.ttd.img ? `<img src="${sigs.ttd.img}" alt="Tanda tangan">` : ''}</div>
+  <div class="sgn">${sigSrc('ttd') ? `<img src="${sigSrc('ttd')}" alt="Tanda tangan">` : ''}</div>
   <div class="nm">(${esc(v.nama)})<br>(${esc(v.nrp)})</div>
   </div><div class="foot">Pedoman SKEM 2025 – Politeknik Elektronika Negeri Surabaya</div>`;
 
@@ -498,17 +501,18 @@ async function buildSig(p) {
 }
 function initSig(p) {
   const S = sigs[p], key = 'skem_' + p;
-  const ui = () => { $(p + 'Prev').innerHTML = S.img ? '<img src="' + S.img + '" alt="Pratinjau tanda tangan">' : '<span>Belum ada</span>'; $(p + 'Del').style.display = S.img ? '' : 'none'; };
-  const save = () => { try { localStorage.setItem(key, JSON.stringify({ raw: S.raw, bg: $(p + 'Bg').checked })); } catch (e) {} };
+  const ui = () => { $(p + 'Prev').innerHTML = S.img ? '<img src="' + S.img + '" alt="Pratinjau tanda tangan">' : '<span>Belum ada</span>'; $(p + 'Del').style.display = S.img ? '' : 'none'; $(p + 'OnL').style.display = S.img ? '' : 'none'; $(p + 'On').checked = S.on !== false; };
+  const save = () => { try { localStorage.setItem(key, JSON.stringify({ raw: S.raw, bg: $(p + 'Bg').checked, on: S.on !== false })); } catch (e) {} };
   $(p + 'File').addEventListener('change', async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     $('msg').textContent = 'Memproses tanda tangan…';
-    try { S.raw = (await handle(f))[0]; await buildSig(p); save(); ui(); render(); $('msg').textContent = ''; }
+    try { S.raw = (await handle(f))[0]; S.on = true; await buildSig(p); save(); ui(); render(); $('msg').textContent = ''; }
     catch (err) { $('msg').textContent = 'Tanda tangan tidak bisa dibaca. Coba simpan ulang sebagai JPG atau PNG.'; }
   });
   $(p + 'Bg').addEventListener('change', async () => { try { await buildSig(p); } catch (e) {} save(); ui(); render(); });
-  $(p + 'Del').onclick = () => { S.raw = ''; S.img = ''; save(); ui(); render(); };
-  (async () => { try { const d = JSON.parse(localStorage.getItem(key) || 'null'); if (d && d.raw) { S.raw = d.raw; $(p + 'Bg').checked = d.bg !== false; await buildSig(p); ui(); render(); } } catch (e) {} })();
+  $(p + 'On').addEventListener('change', () => { S.on = $(p + 'On').checked; save(); render(); });
+  $(p + 'Del').onclick = () => { S.raw = ''; S.img = ''; S.on = true; save(); ui(); render(); };
+  (async () => { try { const d = JSON.parse(localStorage.getItem(key) || 'null'); if (d && d.raw) { S.raw = d.raw; $(p + 'Bg').checked = d.bg !== false; S.on = d.on !== false; await buildSig(p); ui(); render(); } } catch (e) {} })();
 }
 ['ttd', 'vttd'].forEach(initSig);
 
