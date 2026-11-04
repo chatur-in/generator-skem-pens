@@ -103,6 +103,8 @@ table{border-collapse:collapse;width:100%}
 .stmt{border:1.3px solid #000;padding:8px 10px;font-size:11px;text-align:justify;line-height:1.45}
 .ttd{text-align:center;margin:16px 0 0}
 .sgn{height:72px;display:flex;align-items:flex-end;justify-content:center}
+.f td.vsg{vertical-align:middle;text-align:center;padding-top:2px;padding-bottom:2px}
+.vsg img{display:block;margin:0 auto;max-height:52px;max-width:210px}
 .sgn img{max-height:66px;max-width:220px;display:block;margin-bottom:2px}
 .nm{text-align:center;margin:0}
 .foot{position:absolute;left:44px;bottom:14px;font-size:11px}
@@ -146,6 +148,11 @@ table{border-collapse:collapse;width:100%}
     <label for="vnama">Nama verifikator</label><input id="vnama" placeholder="Contoh: Prof. Iwan Syarif">
     <label for="vjab">Jabatan</label><input id="vjab" placeholder="Contoh: Dosen Wali">
     <label for="vtgl">Tanggal verifikasi</label><input id="vtgl" type="date">
+    <label for="vttdFile">Tanda tangan digital verifikator</label>
+    <input type="file" id="vttdFile" accept="image/*,.heic,.heif,.pdf">
+    <div class="ttdbox"><div class="ttdprev" id="vttdPrev"><span>Belum ada</span></div><button type="button" id="vttdDel" style="display:none">Hapus</button></div>
+    <label class="chk"><input type="checkbox" id="vttdBg" checked> Hapus latar putih otomatis</label>
+    <div class="hint">Opsional. Kosongkan jika verifikator akan tanda tangan langsung.</div>
   </fieldset>
 
   <fieldset><legend>IV. Pernyataan</legend>
@@ -187,7 +194,7 @@ const fmt = v => { if (!v) return ''; const [y,m,d] = v.split('-').map(Number); 
 const ids = ['nama','nrp','prodi','prodiLain','dept','deptLain','kegiatan','tgl','lokasi','penyelenggara','jenis','jenisLain','vnama','vjab','vtgl','kota','ttgl'];
 let images = [];
 const dims = new Map();
-let ttdRaw = '', ttdImg = '';
+const sigs = { ttd: { raw: '', img: '' }, vttd: { raw: '', img: '' } }; // tanda tangan mahasiswa & verifikator
 const land = s => { const d = dims.get(s); return !!d && d[0] > d[1]; };
 // Landscape: maks. 2 per halaman (atas-bawah). Portrait: 1 per halaman.
 function paginate() {
@@ -236,11 +243,11 @@ function render() {
   <div class="sec">III. Verifikasi</div>
   <table class="f">${row('Nama Verifikator',v.vnama)}${row('Jabatan',v.vjab)}${row('Tanggal Verifikasi',fmt(v.vtgl))}
     <tr><td class="k">Keputusan</td><td class="c">:</td><td>${box(false)} Disetujui &nbsp;&nbsp;&nbsp;&nbsp; ${box(false)} Ditolak</td></tr>
-    <tr class="tall" style="height:62px"><td class="k">Tanda Tangan<br>Verifikator</td><td class="c">:</td><td></td></tr></table>
+    <tr class="tall" style="height:62px"><td class="k">Tanda Tangan<br>Verifikator</td><td class="c">:</td><td class="vsg">${sigs.vttd.img ? `<img src="${sigs.vttd.img}" alt="Tanda tangan verifikator">` : ''}</td></tr></table>
   <div class="sec">IV. Pernyataan Mahasiswa</div>
   <div class="stmt">Saya menyatakan bahwa seluruh data dan dokumen yang saya lampirkan adalah benar dan dapat dipertanggungjawabkan. Apabila di kemudian hari ditemukan ketidaksesuaian, pemalsuan, atau manipulasi data, saya bersedia menerima konsekuensi sesuai ketentuan yang berlaku, termasuk pembatalan pengajuan SKEM serta sanksi akademik atau administratif dari institusi.</div>
   <div class="ttd">${esc(v.kota)}, ${surat}</div>
-  <div class="sgn">${ttdImg ? `<img src="${ttdImg}" alt="Tanda tangan">` : ''}</div>
+  <div class="sgn">${sigs.ttd.img ? `<img src="${sigs.ttd.img}" alt="Tanda tangan">` : ''}</div>
   <div class="nm">(${esc(v.nama)})<br>(${esc(v.nrp)})</div>
   </div><div class="foot">Pedoman SKEM 2025 – Politeknik Elektronika Negeri Surabaya</div>`;
 
@@ -464,20 +471,21 @@ $('pr').onclick = () => {
 
 $('hicon').innerHTML = LOGO.replace('width="92" height="92"', 'width="30" height="30"');
 $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" height="46" class="lg"');
-// ---- Tanda tangan digital ----
-async function buildTtd() {
-  if (!ttdRaw) { ttdImg = ''; return; }
-  const im = new Image(); await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = ttdRaw; });
+// ---- Tanda tangan digital (mahasiswa 'ttd' dan verifikator 'vttd') ----
+async function buildSig(p) {
+  const S = sigs[p];
+  if (!S.raw) { S.img = ''; return; }
+  const im = new Image(); await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = S.raw; });
   const k = Math.min(1, 700 / im.naturalWidth), w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
   let c = document.createElement('canvas'); c.width = w; c.height = h;
   const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
-  if ($('ttdBg').checked) {
+  if ($(p + 'Bg').checked) {
     const d = x.getImageData(0, 0, w, h), a = d.data; let x0 = w, y0 = h, x1 = -1, y1 = -1;
-    for (let i = 0, p = 0; i < a.length; i += 4, p++) {
+    for (let i = 0, q = 0; i < a.length; i += 4, q++) {
       const l = .299 * a[i] + .587 * a[i + 1] + .114 * a[i + 2];
       const al = l >= 225 ? 0 : l <= 150 ? 255 : Math.round(255 * (225 - l) / 75);
       a[i + 3] = al;
-      if (al > 20) { const px = p % w, py = (p / w) | 0; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
+      if (al > 20) { const px = q % w, py = (q / w) | 0; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
     }
     x.putImageData(d, 0, 0);
     if (x1 >= x0 && y1 >= y0) { // potong ruang kosong di sekeliling tanda tangan
@@ -486,19 +494,23 @@ async function buildTtd() {
       c2.getContext('2d').drawImage(c, x0, y0, c2.width, c2.height, 0, 0, c2.width, c2.height); c = c2;
     }
   }
-  ttdImg = c.toDataURL('image/png');
+  S.img = c.toDataURL('image/png');
 }
-function ttdUI() { $('ttdPrev').innerHTML = ttdImg ? '<img src="' + ttdImg + '" alt="Pratinjau tanda tangan">' : '<span>Belum ada</span>'; $('ttdDel').style.display = ttdImg ? '' : 'none'; }
-function ttdSave() { try { localStorage.setItem('skem_ttd', JSON.stringify({ raw: ttdRaw, bg: $('ttdBg').checked })); } catch (e) {} }
-$('ttdFile').addEventListener('change', async e => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  $('msg').textContent = 'Memproses tanda tangan…';
-  try { ttdRaw = (await handle(f))[0]; await buildTtd(); ttdSave(); ttdUI(); render(); $('msg').textContent = ''; }
-  catch (err) { $('msg').textContent = 'Tanda tangan tidak bisa dibaca. Coba simpan ulang sebagai JPG atau PNG.'; }
-});
-$('ttdBg').addEventListener('change', async () => { try { await buildTtd(); } catch (e) {} ttdSave(); ttdUI(); render(); });
-$('ttdDel').onclick = () => { ttdRaw = ''; ttdImg = ''; ttdSave(); ttdUI(); render(); };
-(async () => { try { const s = JSON.parse(localStorage.getItem('skem_ttd') || 'null'); if (s && s.raw) { ttdRaw = s.raw; $('ttdBg').checked = s.bg !== false; await buildTtd(); ttdUI(); render(); } } catch (e) {} })();
+function initSig(p) {
+  const S = sigs[p], key = 'skem_' + p;
+  const ui = () => { $(p + 'Prev').innerHTML = S.img ? '<img src="' + S.img + '" alt="Pratinjau tanda tangan">' : '<span>Belum ada</span>'; $(p + 'Del').style.display = S.img ? '' : 'none'; };
+  const save = () => { try { localStorage.setItem(key, JSON.stringify({ raw: S.raw, bg: $(p + 'Bg').checked })); } catch (e) {} };
+  $(p + 'File').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    $('msg').textContent = 'Memproses tanda tangan…';
+    try { S.raw = (await handle(f))[0]; await buildSig(p); save(); ui(); render(); $('msg').textContent = ''; }
+    catch (err) { $('msg').textContent = 'Tanda tangan tidak bisa dibaca. Coba simpan ulang sebagai JPG atau PNG.'; }
+  });
+  $(p + 'Bg').addEventListener('change', async () => { try { await buildSig(p); } catch (e) {} save(); ui(); render(); });
+  $(p + 'Del').onclick = () => { S.raw = ''; S.img = ''; save(); ui(); render(); };
+  (async () => { try { const d = JSON.parse(localStorage.getItem(key) || 'null'); if (d && d.raw) { S.raw = d.raw; $(p + 'Bg').checked = d.bg !== false; await buildSig(p); ui(); render(); } } catch (e) {} })();
+}
+['ttd', 'vttd'].forEach(initSig);
 
 thumbs(); render();
 </script>
