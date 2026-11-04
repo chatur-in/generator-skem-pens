@@ -55,6 +55,15 @@ main{min-width:0;background:var(--soft);border:1px solid var(--line);border-radi
 .ov.on{opacity:1;visibility:visible}
 .ov .ovbox{background:#fff;border-radius:20px;padding:28px 30px 24px;text-align:center;width:min(340px,100%);box-shadow:0 20px 50px rgba(20,48,79,.4);transform:translateY(14px) scale(.96);transition:transform .35s cubic-bezier(.2,.9,.3,1.2)}
 .ov.on .ovbox{transform:none}
+.qbox{text-align:left!important;width:min(400px,100%)!important}
+.qbox>b{display:block;font-size:17px;color:#000}.qbox>small{display:block;color:#000;font-size:12.5px;margin:2px 0 12px}
+.opt{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer;color:#000;font-size:14px;font-weight:400;transition:border-color .15s,background .15s}
+.opt input{width:auto;accent-color:var(--acc);margin:0;flex:none}
+.opt b{display:block;font-size:14.5px}.opt small{display:block;font-size:12px;color:#000;margin-top:1px}
+.opt .z{margin-left:auto;font-weight:700;white-space:nowrap;padding-left:6px}
+.opt.sel{border-color:var(--acc);background:var(--soft)}
+.qbtn{display:flex;gap:10px;margin-top:14px}.qbtn button{flex:1;margin:0}.qbtn .main{flex:1.4;width:auto}
+
 .ring{position:relative;width:88px;height:88px;margin:0 auto 16px;display:grid;place-items:center}
 .ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0 25%,var(--acc) 25% 70%,var(--yel) 70% 100%);-webkit-mask:radial-gradient(circle,transparent 36px,#000 37px);mask:radial-gradient(circle,transparent 36px,#000 37px);animation:sp 1s linear infinite}
 .ring .lg{animation:pulse 1.4s ease-in-out infinite}
@@ -152,6 +161,13 @@ table{border-collapse:collapse;width:100%}
 </div>
 
 <div class="ov" id="ov" role="status" aria-live="polite"><div class="ovbox"><div class="ring"><span id="ovlogo"></span><svg class="ck" viewBox="0 0 88 88"><path class="c-tick" d="M22 46l15 15 29-32"/></svg></div><b id="ovtxt">Menyiapkan dokumen…</b><small>Mohon tunggu, jangan tutup halaman ini.</small><div class="bar"><i id="ovbar"></i></div><div class="steps" id="ovsteps"></div></div></div>
+<div class="ov" id="qov" role="dialog" aria-modal="true" aria-labelledby="qtt"><div class="ovbox qbox">
+  <b id="qtt">Pilih kualitas PDF</b><small id="qinfo"></small>
+  <label class="opt"><input type="radio" name="q" value="h"><span><b>Hemat</b><small>File kecil, cocok untuk dikirim lewat chat</small></span><span class="z" id="sz_h">–</span></label>
+  <label class="opt"><input type="radio" name="q" value="s" checked><span><b>Standar</b><small>Seimbang antara ketajaman dan ukuran</small></span><span class="z" id="sz_s">–</span></label>
+  <label class="opt"><input type="radio" name="q" value="t"><span><b>Tajam</b><small>Paling jernih, untuk dicetak</small></span><span class="z" id="sz_t">–</span></label>
+  <div class="qbtn"><button type="button" id="qno">Batal</button><button type="button" class="main" id="qgo">Unduh PDF</button></div>
+</div></div>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -314,9 +330,11 @@ async function svgToPNG(sv, w, h) {
   cv.getContext('2d').drawImage(img, 0, 0, w * k, h * k);
   return cv.toDataURL('image/png');
 }
-async function makePDF(onP) {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+// Pilihan kualitas: k = skala dari render 3x, q = kualitas JPEG
+const PRESETS = { h: { k: 2 / 3, q: 0.7 }, s: { k: 1, q: 0.8 }, t: { k: 1, q: 0.95 } };
+// Render semua halaman sekali, lalu hasilkan 3 versi gambar (hemat/standar/tajam) agar ukuran file bisa dihitung akurat.
+async function renderPages(onP) {
+  const out = { h: [], s: [], t: [] };
   const stage = document.createElement('div');
   stage.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px'; stage.id = 'pdfstage';
   // Garis seragam di PDF: html2canvas tidak mendukung border-collapse (garis dalam tergambar 2x tebal) dan
@@ -343,15 +361,32 @@ async function makePDF(onP) {
         sv.replaceWith(im);
       }
       const cv = await html2canvas(c, { scale: 3, backgroundColor: '#fff', useCORS: true });
-      if (n > 1) pdf.addPage();
-      pdf.addImage(cv.toDataURL('image/jpeg', 0.8), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      for (const key in PRESETS) {
+        const { k, q } = PRESETS[key]; let src = cv;
+        if (k < 1) {
+          src = document.createElement('canvas'); src.width = Math.round(cv.width * k); src.height = Math.round(cv.height * k);
+          const x = src.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+          x.fillStyle = '#fff'; x.fillRect(0, 0, src.width, src.height); x.drawImage(cv, 0, 0, src.width, src.height);
+        }
+        out[key].push(src.toDataURL('image/jpeg', q));
+      }
     }
   } finally { stage.remove(); }
+  return out;
+}
+function buildPDF(imgs) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  imgs.forEach((u, i) => { if (i) pdf.addPage(); pdf.addImage(u, 'JPEG', 0, 0, 210, 297, undefined, 'FAST'); });
   return pdf;
 }
+const bytesOf = arr => arr.reduce((a, u) => a + Math.round((u.length - u.indexOf(',') - 1) * 0.75), 0) + 1500 * arr.length;
+const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
 
 const setProg = (f, t, ms) => { const b = $('ovbar'); b.style.transition = 'transform ' + (ms || 0) + 'ms linear'; b.style.transform = 'scaleX(' + f + ')'; if (t) $('ovtxt').textContent = t; };
 const setSteps = (n, t) => { $('ovsteps').innerHTML = Array.from({ length: t }, (_, i) => '<span class="' + (i + 1 < n ? 'done' : i + 1 === n ? 'cur' : '') + '"></span>').join(''); };
+let cache = null;
+const closeOv = () => $('ov').classList.remove('on');
 $('dl').onclick = async () => {
   const box = $('ov').firstElementChild; box.classList.remove('done');
   $('dl').disabled = true; $('msg').textContent = '';
@@ -359,19 +394,44 @@ $('dl').onclick = async () => {
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   let est = 1600, last = performance.now();
   try {
-    const pdf = await makePDF((n, t) => {
+    cache = await renderPages((n, t) => {
       const now = performance.now(); if (n > 1) est = now - last; last = now;
-      setSteps(n, t); setProg(0.08 + 0.86 * n / t, 'Membuat halaman ' + n + ' dari ' + t, est);
+      setSteps(n, t); setProg(0.08 + 0.86 * n / t, 'Menghitung ukuran file… (' + n + '/' + t + ')', est);
     });
-    setProg(1, 'Menyimpan file…', 250); await new Promise(r => setTimeout(r, 300));
-    pdf.save('Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + '.pdf');
-    box.classList.add('done'); $('ovtxt').textContent = 'PDF berhasil diunduh';
-    $('ovsteps').querySelectorAll('span').forEach(s => s.className = 'done');
-    $('msg').textContent = 'PDF berhasil dibuat.';
-    await new Promise(r => setTimeout(r, 1200));
-  } catch (e) { $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.'; }
-  $('ov').classList.remove('on'); $('dl').disabled = false;
+  } catch (e) {
+    $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.';
+    closeOv(); $('dl').disabled = false; return;
+  }
+  for (const k in PRESETS) $('sz_' + k).textContent = '±' + fmtSize(bytesOf(cache[k]));
+  $('qinfo').textContent = cache.s.length + ' halaman · ukuran adalah perkiraan';
+  let pick = 's'; try { pick = localStorage.getItem('skemq') || 's'; } catch (e) {}
+  if (!PRESETS[pick]) pick = 's';
+  document.querySelector('input[name=q][value=' + pick + ']').checked = true; markQ();
+  closeOv(); $('qov').classList.add('on');
 };
+function markQ() { document.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o.querySelector('input').checked)); }
+document.querySelectorAll('input[name=q]').forEach(r => r.addEventListener('change', markQ));
+const closeQ = () => { $('qov').classList.remove('on'); $('dl').disabled = false; cache = null; };
+$('qno').onclick = closeQ;
+$('qgo').onclick = async () => {
+  const key = document.querySelector('input[name=q]:checked').value, imgs = cache[key];
+  try { localStorage.setItem('skemq', key); } catch (e) {}
+  $('qov').classList.remove('on');
+  const box = $('ov').firstElementChild; box.classList.remove('done');
+  setProg(0, 'Menyimpan file…', 0); $('ovsteps').innerHTML = ''; $('ov').classList.add('on');
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  try {
+    setProg(0.9, 'Menyimpan file…', 350);
+    const pdf = buildPDF(imgs); await new Promise(r => setTimeout(r, 380));
+    pdf.save('Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + '.pdf');
+    setProg(1, '', 100);
+    box.classList.add('done'); $('ovtxt').textContent = 'PDF berhasil diunduh (' + fmtSize(bytesOf(imgs)) + ')';
+    $('msg').textContent = 'PDF berhasil dibuat.';
+    await new Promise(r => setTimeout(r, 1300));
+  } catch (e) { $('msg').textContent = 'Gagal membuat PDF. Coba tombol Cetak langsung, lalu pilih Simpan sebagai PDF.'; }
+  closeOv(); $('dl').disabled = false; cache = null;
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('qov').classList.contains('on')) closeQ(); });
 $('pr').onclick = () => {
   const w = window.open('', '_blank');
   if (!w) { $('msg').textContent = 'Pop-up diblokir. Gunakan tombol Unduh PDF.'; return; }
