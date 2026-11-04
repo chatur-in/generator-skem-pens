@@ -41,6 +41,9 @@ button:disabled{opacity:.6;cursor:wait}
 .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .th{position:relative;width:66px;height:66px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .th img{width:100%;height:100%;object-fit:cover}
+.th .rot{position:absolute;left:0;right:0;bottom:0;display:flex;background:rgba(0,0,0,.55)}
+.th .rot button{position:static;flex:1;border:0;border-radius:0;background:transparent;color:#fff;padding:0;line-height:20px;font-size:14px}
+.th .rot button:hover{background:rgba(255,255,255,.25)}
 .th button{position:absolute;top:3px;right:3px;padding:0 6px;line-height:18px;font-size:13px;border-radius:6px;border-color:var(--line);color:var(--ink)}
 .hint{font-size:12px;color:var(--mute);margin-top:8px}
 #msg{min-height:18px;text-align:center}
@@ -121,7 +124,7 @@ table{border-collapse:collapse;width:100%}
   <fieldset><legend>Lampiran bukti</legend>
     <input id="files" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.svg,.heic,.heif,.pdf,application/pdf" multiple>
     <div class="thumbs" id="thumbs"></div>
-    <div class="hint">Format didukung: JPG, PNG, WebP, GIF, BMP, AVIF, SVG, HEIC/HEIF (foto iPhone), dan PDF (maksimal 6 halaman per file). Hasilnya tampil di halaman 2.</div>
+    <div class="hint">Format didukung: JPG, PNG, WebP, GIF, BMP, AVIF, SVG, HEIC/HEIF (foto iPhone), dan PDF (maksimal 6 halaman per file). Hasilnya tampil di halaman 2. Foto potret 1 per halaman, foto lanskap 2 per halaman. Gunakan tombol ↺ ↻ pada foto untuk memutar.</div>
   </fieldset>
 
   <fieldset><legend>III. Verifikasi</legend>
@@ -227,12 +230,31 @@ function fit() {
   document.querySelectorAll('.pv').forEach(pv => { pv.style.width = 794*s+'px'; pv.style.height = 1123*s+'px'; pv.firstElementChild.style.transform = `scale(${s})`; });
 }
 
+// Putar foto 90° (dir = 1 searah jarum jam, -1 berlawanan). Hasilnya jadi gambar baru, sehingga pratinjau dan PDF ikut berputar.
+async function rotateImg(i, dir) {
+  const src = images[i];
+  const im = new Image();
+  await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = src; });
+  const w = im.naturalWidth, h = im.naturalHeight;
+  const c = document.createElement('canvas'); c.width = h; c.height = w;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.translate(h / 2, w / 2); x.rotate(dir * Math.PI / 2); x.drawImage(im, -w / 2, -h / 2);
+  const u = c.toDataURL('image/jpeg', 0.95);
+  dims.delete(src); dims.set(u, [c.width, c.height]);
+  images[i] = u; thumbs(); render();
+}
+
 function thumbs() {
   $('thumbs').innerHTML = '';
   images.forEach((src, i) => {
     const d = document.createElement('div'); d.className = 'th';
-    d.innerHTML = `<img src="${src}" alt="Lampiran ${i+1}"><button type="button" aria-label="Hapus lampiran ${i+1}">×</button>`;
-    d.querySelector('button').onclick = () => { images.splice(i,1); thumbs(); render(); };
+    const L = land(src) ? 'Lanskap' : 'Potret';
+    d.title = L + ' – ' + (L === 'Lanskap' ? '2 foto per halaman' : '1 foto per halaman');
+    d.innerHTML = `<img src="${src}" alt="Lampiran ${i+1}"><button type="button" class="del" aria-label="Hapus lampiran ${i+1}">×</button>` +
+      `<div class="rot"><button type="button" data-d="-1" aria-label="Putar kiri lampiran ${i+1}">↺</button><button type="button" data-d="1" aria-label="Putar kanan lampiran ${i+1}">↻</button></div>`;
+    d.querySelector('.del').onclick = () => { dims.delete(src); images.splice(i,1); thumbs(); render(); };
+    d.querySelectorAll('.rot button').forEach(b => b.onclick = () => rotateImg(i, +b.dataset.d));
     $('thumbs').appendChild(d);
   });
 }
