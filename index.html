@@ -415,11 +415,11 @@ function rotateMsgs() {
   const id = setInterval(() => { if (i < MSGS.length - 1) { $('ovtxt').textContent = MSGS[++i]; setSteps(i + 1, MSGS.length); } }, 2200);
   return () => clearInterval(id);
 }
-// Nama file: Formulir_SKEM_NRP_X, X = kata pertama nama kegiatan
+// Nama file: Formulir_SKEM_NRP_X, X = 3 kata pertama nama kegiatan (dipisah tanda hubung)
 function pdfName() {
   const clean = w => w.replace(/[^\p{L}\p{N}]/gu, '');
-  const first = $('kegiatan').value.trim().split(/\s+/).map(clean).find(Boolean);
-  return 'Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + (first ? '_' + first : '') + '.pdf';
+  const last = $('kegiatan').value.trim().split(/\s+/).map(clean).filter(Boolean).slice(0, 3).join('-');
+  return 'Formulir_SKEM_' + ($('nrp').value.trim() || 'mahasiswa') + (last ? '_' + last : '') + '.pdf';
 }
 let cache = null;
 const closeOv = () => $('ov').classList.remove('on');
