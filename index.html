@@ -650,8 +650,12 @@ table{border-collapse:collapse;width:100%}
 /* ===== Responsif & Aksesibilitas & Cetak ===== */
 @media (max-width:860px){
   .cal{left:50%!important;transform:translateX(-50%)}
-  .app{grid-template-columns:1fr;padding:12px}
-  aside{position:static;max-height:none;margin-top:0;padding:16px 2px 2px}
+  .app{grid-template-columns:minmax(0,1fr);padding:12px}
+  aside{position:static;max-height:none;margin-top:0;padding:16px 2px 2px;min-width:0;max-width:100%}
+  fieldset,main,.top{min-width:0;max-width:100%}
+  .row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .row.nrp{grid-template-columns:110px minmax(0,1fr)}
+  input,select,textarea{max-width:100%;min-width:0}
   .top{margin:8px 10px 0;padding:8px 14px}
 }
 @media (prefers-reduced-motion:reduce){
