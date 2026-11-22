@@ -76,7 +76,7 @@ body{
   box-shadow:inset 0 0 32px rgba(255,255,255,.45),0 0 24px rgba(23,70,121,.05);
 }
 .bg-ring.r1{width:54vmax;height:54vmax;top:-16vmax;right:-10vmax;border-color:rgba(96,165,250,.22)}
-.bg-ring.r2{width:42vmax;height:42vmax;bottom:-14vmax;left:-8vmax;border-color:rgba(23,70,121,.12)}
+.bg-ring.r2{width:42vmax;height:42vmax;bottom:-14vmax;left:-8vmax;border-color:rgba(45,190,170,.22)}
 .bg-ring.r3{width:28vmax;height:28vmax;top:36%;left:32%;border-color:rgba(23,70,121,.12)}
 /* Gelombang kaca bergerak di bagian bawah halaman */
 .wave-glow{
@@ -116,9 +116,9 @@ body{
 }
 .orb-3{
   width:34vmax;height:34vmax;bottom:-8%;left:18%;
-  background:radial-gradient(circle at 45% 45%,rgba(23,70,121,.14) 0%,rgba(23,70,121,.08) 46%,rgba(23,70,121,0) 74%);
+  background:radial-gradient(circle at 45% 45%,rgba(45,190,170,.22) 0%,rgba(45,190,170,.12) 46%,rgba(45,190,170,0) 74%);
   filter:blur(38px);
-  animation:orbFloat3 21s ease-in-out infinite alternate;
+  animation:orbOrbit 9s ease-in-out infinite;
 }
 .orb-4{
   width:36vmax;height:36vmax;top:46%;right:22%;
@@ -135,6 +135,13 @@ body{
   0%{transform:translate3d(0,0,0) scale(1)}
   50%{transform:translate3d(-48px,34px,0) scale(1.08)}
   100%{transform:translate3d(-16px,-32px,0) scale(.95)}
+}
+@keyframes orbOrbit{
+  0%{transform:translate(0,0)}
+  25%{transform:translate(14vw,-7vh)}
+  50%{transform:translate(6vw,-16vh)}
+  75%{transform:translate(-8vw,-8vh)}
+  100%{transform:translate(0,0)}
 }
 @keyframes orbFloat3{
   0%{transform:translate3d(0,0,0) scale(1)}
@@ -557,8 +564,9 @@ table{border-collapse:collapse;width:100%}
 .cal.on{display:block;animation:calin .16s ease-out}
 @keyframes calin{from{opacity:0;transform:translateY(-6px)}}
 .cal .hd2{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.cal .hd2 .cb{height:34px;padding:0 10px;line-height:1;box-sizing:border-box}
 .cal .hd2 .cb[data-dd="m"]{flex:1;min-width:0}
-.cal .hd2 .cb[data-dd="y"]{flex:none;width:58px;font-size:12px;font-weight:600;padding:5px 4px;color:var(--acc)}
+.cal .hd2 .cb[data-dd="y"]{flex:none;width:64px;padding:0 6px;font-size:12px;font-weight:600;color:var(--acc)}
 .cal .hd2 select{flex:1;min-width:0;padding:6px 8px;font-size:13px;font-weight:600}
 .cal .nv{flex:none;width:32px;height:32px;padding:0;border-radius:10px;font-size:18px;line-height:1}
 .cal .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
