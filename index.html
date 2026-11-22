@@ -126,6 +126,56 @@ table{border-collapse:collapse;width:100%}
 .cal .ft2 button{border:0;background:none;color:var(--acc);padding:6px 10px;font-size:13px}
 @media (max-width:860px){.cal{left:50%!important;transform:translateX(-50%)}}
 @media (max-width:860px){.app{grid-template-columns:1fr;padding:12px}aside{position:static;max-height:none}}
+
+/* ===== Liquid Glass minimalis (hanya UI aplikasi; kertas A4 tetap putih polos) ===== */
+:root{--blur:blur(24px) saturate(160%);--edge:inset 0 1px 0 rgba(255,255,255,.9);--drop:0 12px 32px -8px rgba(23,70,121,.2),0 2px 6px rgba(23,70,121,.06)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,Roboto,Arial,sans-serif;background:radial-gradient(70vmax 45vmax at 0% 0%,rgba(23,70,121,.13),transparent 70%) fixed,#e9eef5}
+.top{margin:10px 14px 0;top:calc(10px + env(safe-area-inset-top,0px));border-radius:22px;border:1px solid rgba(255,255,255,.22);background:rgba(23,70,121,.9);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 26px rgba(23,70,121,.28)}
+aside{top:92px;max-height:calc(100vh - 106px);padding:4px 8px 10px 4px}
+fieldset,main{border:1px solid rgba(255,255,255,.85);background:rgba(255,255,255,.62);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--edge),var(--drop)}
+fieldset{border-radius:24px}
+main{border-radius:30px;background:rgba(255,255,255,.4)}
+legend{box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 6px rgba(23,70,121,.3)}
+input,select{padding:10px 12px;background-color:rgba(255,255,255,.78);border:1px solid rgba(23,70,121,.14);border-radius:12px;box-shadow:inset 0 1px 2px rgba(23,70,121,.08)}
+input.dp{background-color:rgba(255,255,255,.78)}
+input[type=file]{background-color:rgba(255,255,255,.4);border:1.5px dashed rgba(23,70,121,.3)}
+input:focus,select:focus{background-color:#fff;border-color:var(--acc);box-shadow:0 0 0 4px rgba(23,70,121,.14)}
+#pr,.qbtn button:not(.main){border:1px solid rgba(23,70,121,.18);border-radius:14px;background:rgba(255,255,255,.72);box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(23,70,121,.1);transition:transform .15s,background .15s}
+#pr:hover,.qbtn button:not(.main):hover{background:rgba(255,255,255,.95);transform:translateY(-1px)}
+button.main{border:1px solid rgba(255,255,255,.55);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(0,0,0,.08),0 6px 14px rgba(224,180,0,.35);transition:transform .15s,background .15s}
+button.main:hover{border-color:rgba(255,255,255,.55);transform:translateY(-1px)}
+button.main:active,#pr:active,.qbtn button:not(.main):active{transform:translateY(1px) scale(.99)}
+.th{border:1px solid rgba(255,255,255,.85);border-radius:12px;box-shadow:0 3px 10px rgba(23,70,121,.18)}
+.ttdprev{background:rgba(255,255,255,.5)}
+.ov{background:rgba(20,48,79,.3)}
+.ov .ovbox,.cal{border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.84);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:var(--edge),0 24px 60px rgba(20,48,79,.35)}
+.ov .ovbox{border-radius:28px}
+.cal{border-radius:22px}
+.opt{border:1.5px solid rgba(23,70,121,.12);border-radius:14px;background:rgba(255,255,255,.62)}
+.opt.sel{border-color:var(--acc);background:rgba(23,70,121,.07)}
+.cal .d:hover{background:rgba(23,70,121,.08)}
+.cal .d.s,.cal .d.s:hover{background:var(--acc);box-shadow:0 3px 8px rgba(23,70,121,.3)}
+.pv{border-radius:4px;box-shadow:0 1px 3px rgba(23,70,121,.15),0 16px 40px -8px rgba(23,70,121,.3)}
+@media (prefers-reduced-motion:reduce){button,#pr{transition:none}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){fieldset,main,.ov .ovbox,.cal{background:rgba(255,255,255,.95)}}
+@media (prefers-reduced-transparency:reduce){fieldset,main,.ov .ovbox,.cal{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}.top{background:#174679;-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* ===== Dropdown glass ===== */
+:root{--chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23174679' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+.dsel-n{display:none!important}
+.dsel{display:block;width:100%;text-align:left;font-weight:400;padding:10px 36px 10px 12px;border:1px solid rgba(23,70,121,.14);border-radius:12px;background:rgba(255,255,255,.78) var(--chev) no-repeat right 12px center/14px;box-shadow:inset 0 1px 2px rgba(23,70,121,.08);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsel:hover,.dsel[aria-expanded=true]{background:#fff var(--chev) no-repeat right 12px center/14px}
+.dsel[aria-expanded=true]{border-color:var(--acc);box-shadow:0 0 0 4px rgba(23,70,121,.14)}
+.cal .cb{flex:1;min-width:0;text-align:left;padding:6px 26px 6px 10px;font-size:13px;font-weight:600;border:1px solid rgba(23,70,121,.14);border-radius:10px;background:rgba(255,255,255,.7) var(--chev) no-repeat right 8px center/12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal .cb:hover{background:#fff var(--chev) no-repeat right 8px center/12px}
+.dd{position:fixed;z-index:200;display:none;max-width:calc(100vw - 16px);max-height:min(300px,60vh);overflow:auto;padding:6px;border:1px solid rgba(255,255,255,.9);border-radius:18px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:inset 0 1px 0 #fff,0 20px 50px rgba(20,48,79,.32),0 2px 8px rgba(20,48,79,.1)}
+.dd.on{display:block;animation:calin .15s ease-out}
+.dd .dg{padding:8px 10px 4px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--acc)}
+.dd .di{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:8px 10px;border:0;border-radius:11px;background:transparent;font-size:13.5px;font-weight:500;color:#000}
+.dd .di:hover,.dd .di:focus-visible{background:rgba(23,70,121,.09)}
+.dd .di.s,.dd .di.s:hover{background:var(--acc);color:#fff}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.dd{background:rgba(255,255,255,.96)}}
+@media (prefers-reduced-transparency:reduce){.dd{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}}
 </style>
 </head>
 <body>
@@ -479,6 +529,41 @@ $('pr').onclick = () => {
 $('hicon').innerHTML = LOGO.replace('width="92" height="92"', 'width="30" height="30"');
 $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" height="46" class="lg"');
 
+// ---- Dropdown glass (pengganti daftar bawaan browser) ----
+const dd = document.createElement('div'); dd.className = 'dd'; dd.setAttribute('role', 'listbox'); document.body.appendChild(dd);
+let ddA = null, ddCb = null;
+function closeMenu() { if (!ddA) return; dd.classList.remove('on'); ddA.setAttribute('aria-expanded', 'false'); ddA = null; }
+function openMenu(a, items, sel, cb, minW) {
+  if (ddA === a) { closeMenu(); return; }
+  closeMenu(); ddA = a; ddCb = cb; a.setAttribute('aria-expanded', 'true');
+  dd.innerHTML = items.map(o => o.g ? '<div class="dg">' + esc(o.g) + '</div>'
+    : '<button type="button" class="di' + (String(o.v) === String(sel) ? ' s' : '') + '" role="option" data-v="' + esc(o.v) + '">' + esc(o.t) + (String(o.v) === String(sel) ? '<span aria-hidden="true">✓</span>' : '') + '</button>').join('');
+  const r = a.getBoundingClientRect(); dd.style.width = Math.max(r.width, minW || 0) + 'px'; dd.classList.add('on');
+  const w = dd.offsetWidth, h = dd.offsetHeight;
+  dd.style.left = Math.min(Math.max(8, r.left), innerWidth - w - 8) + 'px';
+  dd.style.top = (r.bottom + 6 + h <= innerHeight ? r.bottom + 6 : r.top - h - 6 >= 8 ? r.top - h - 6 : Math.max(8, innerHeight - h - 8)) + 'px';
+  const c = dd.querySelector('.s'); if (c) dd.scrollTop = c.offsetTop - dd.clientHeight / 2 + c.offsetHeight / 2;
+}
+dd.addEventListener('click', e => { const b = e.target.closest('.di'); if (!b) return; const cb = ddCb; closeMenu(); cb(b.dataset.v); });
+dd.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return; e.preventDefault();
+  const l = [...dd.querySelectorAll('.di')], i = l.indexOf(document.activeElement);
+  l[(i + (e.key === 'ArrowDown' ? 1 : -1) + l.length) % l.length].focus();
+});
+document.addEventListener('mousedown', e => { if (ddA && !dd.contains(e.target) && !ddA.contains(e.target)) closeMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ddA) { const a = ddA; closeMenu(); e.stopImmediatePropagation(); if (a.isConnected) a.focus(); } });
+document.addEventListener('scroll', e => { if (ddA && !dd.contains(e.target)) closeMenu(); }, true);
+window.addEventListener('resize', closeMenu);
+['prodi', 'dept', 'jenis'].forEach(id => {
+  const sel = $(id), btn = document.createElement('button'), lab = document.querySelector('label[for="' + id + '"]');
+  btn.type = 'button'; btn.className = 'dsel'; btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
+  sel.classList.add('dsel-n'); sel.insertAdjacentElement('afterend', btn);
+  if (lab) lab.addEventListener('click', e => { e.preventDefault(); btn.focus(); });
+  const sync = () => { btn.textContent = sel.value; };
+  const items = () => { const o = []; [...sel.children].forEach(c => { if (c.tagName === 'OPTGROUP') { o.push({ g: c.label }); [...c.children].forEach(x => o.push({ v: x.value, t: x.textContent })); } else o.push({ v: c.value, t: c.textContent }); }); return o; };
+  btn.addEventListener('click', () => openMenu(btn, items(), sel.value, v => { sel.value = v; sync(); sel.dispatchEvent(new Event('input', { bubbles: true })); btn.focus(); }, 240));
+  sync();
+});
 // ---- Pemilih tanggal (kalender bahasa Indonesia) ----
 (function () {
   const cal = document.createElement('div'); cal.className = 'cal'; cal.setAttribute('role', 'dialog'); cal.setAttribute('aria-label', 'Pilih tanggal');
@@ -498,8 +583,7 @@ $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" heigh
     }
     let yrs = ''; for (let y = Math.min(yr - 10, vy); y <= Math.max(yr + 5, vy); y++) yrs += '<option' + (y === vy ? ' selected' : '') + '>' + y + '</option>';
     cal.innerHTML = '<div class="hd2"><button type="button" class="nv" data-n="-1" aria-label="Bulan sebelumnya">‹</button>' +
-      '<select class="sm" aria-label="Bulan">' + BLN.map((b, i) => '<option value="' + i + '"' + (i === vm ? ' selected' : '') + '>' + b + '</option>').join('') + '</select>' +
-      '<select class="sy" aria-label="Tahun">' + yrs + '</select>' +
+      '<button type="button" class="cb" data-dd="m" aria-haspopup="listbox" aria-expanded="false">' + BLN[vm] + '</button><button type="button" class="cb" data-dd="y" aria-haspopup="listbox" aria-expanded="false">' + vy + '</button>' +
       '<button type="button" class="nv" data-n="1" aria-label="Bulan berikutnya">›</button></div>' +
       '<div class="g">' + HARI.map(h => '<div class="w">' + h + '</div>').join('') + cells + '</div>' +
       '<div class="ft2"><button type="button" data-a="clear">Hapus</button><button type="button" data-a="today">Hari ini</button></div>';
@@ -520,6 +604,11 @@ $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" heigh
   cal.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.v) pick(b.dataset.v);
+    else if (b.dataset.dd) {
+      const k = b.dataset.dd, yr = new Date().getFullYear(), o = [];
+      if (k === 'm') BLN.forEach((t, i) => o.push({ v: i, t })); else for (let y = Math.min(yr - 10, vy); y <= Math.max(yr + 5, vy); y++) o.push({ v: y, t: String(y) });
+      openMenu(b, o, k === 'm' ? vm : vy, v => { if (k === 'm') vm = +v; else vy = +v; draw(); }, k === 'm' ? 150 : 96);
+    }
     else if (b.dataset.n) { vm += +b.dataset.n; if (vm < 0) { vm = 11; vy--; } else if (vm > 11) { vm = 0; vy++; } draw(); }
     else if (b.dataset.a === 'today') pick(iso(new Date()));
     else if (b.dataset.a === 'clear') pick('');
@@ -531,9 +620,9 @@ $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" heigh
     f.addEventListener('keydown', e => { if (['Enter', ' ', 'ArrowDown'].includes(e.key)) { e.preventDefault(); open(id); } });
     sync(id);
   });
-  document.addEventListener('mousedown', e => { if (cur && !cal.contains(e.target) && e.target !== $(cur + '_d')) close(); });
+  document.addEventListener('mousedown', e => { if (cur && !cal.contains(e.target) && e.target !== $(cur + '_d') && !e.target.closest('.dd')) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && cur) { const id = cur; close(); $(id + '_d').focus(); } });
-  document.addEventListener('scroll', e => { if (cur && !cal.contains(e.target)) close(); }, true);
+  document.addEventListener('scroll', e => { if (cur && !cal.contains(e.target) && !(e.target.closest && e.target.closest('.dd'))) close(); }, true);
   window.addEventListener('resize', () => cur && close());
   const kt = () => { $('ttgl_d').disabled = $('kosongTgl').checked; if ($('kosongTgl').checked) close(); };
   $('kosongTgl').addEventListener('input', kt); kt();
