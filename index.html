@@ -557,6 +557,8 @@ table{border-collapse:collapse;width:100%}
 .cal.on{display:block;animation:calin .16s ease-out}
 @keyframes calin{from{opacity:0;transform:translateY(-6px)}}
 .cal .hd2{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.cal .hd2 .cb[data-dd="m"]{flex:1;min-width:0}
+.cal .hd2 .cb[data-dd="y"]{flex:none;width:58px;font-size:12px;font-weight:600;padding:5px 4px;color:var(--acc)}
 .cal .hd2 select{flex:1;min-width:0;padding:6px 8px;font-size:13px;font-weight:600}
 .cal .nv{flex:none;width:32px;height:32px;padding:0;border-radius:10px;font-size:18px;line-height:1}
 .cal .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
