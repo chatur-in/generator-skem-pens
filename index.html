@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ===== Variabel Dasar & Token Kristal Bening ===== */
 :root{
@@ -690,6 +690,15 @@ table{border-collapse:collapse;width:100%}
 @media (prefers-reduced-transparency:reduce){
   .top,fieldset,main,.ov .ovbox,.cal,.dd,input,select,.dsel{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
 }
+@media (max-width:860px){
+  /* Optimasi HP: tanpa backdrop-filter bertumpuk & tanpa animasi latar terus-menerus */
+  body{background-attachment:scroll}
+  .orb,.wave-glow,.wave-glow::after{animation:none!important}
+  .orb,.wave-glow{filter:none!important}
+  *,*::before,*::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  .top,fieldset,main,.cal,.dd,.ov .ovbox{background:rgba(255,255,255,.92)!important}
+  input,select,textarea,.dsel{background:rgba(255,255,255,.96)!important}
+}
 @media print{
   .bg-scene{display:none!important}
   body{background:#fff!important}
@@ -919,7 +928,8 @@ $('files').addEventListener('change', async e => {
   }
   $('msg').textContent = bad.length ? 'Tidak bisa dibaca: ' + bad.join(', ') + '. Coba simpan ulang sebagai JPG atau PNG.' : '';
 });
-[...ids, 'kosongTgl'].forEach(i => $(i).addEventListener('input', render));
+let _rq = 0; const rend = () => { cancelAnimationFrame(_rq); _rq = requestAnimationFrame(render); };
+[...ids, 'kosongTgl'].forEach(i => $(i).addEventListener('input', rend));
 window.addEventListener('resize', fit);
 
 async function svgToPNG(sv, w, h) {
@@ -1060,7 +1070,7 @@ $('hicon').innerHTML = LOGO.replace('width="92" height="92"', 'width="30" height
 $('ovlogo').innerHTML = LOGO.replace('width="92" height="92"', 'width="46" height="46" class="lg"');
 
 // ---- Efek sorot kursor kristal halus pada panel formulir (fieldset) ----
-try {
+if (matchMedia('(hover:hover) and (pointer:fine)').matches) try {
   document.querySelectorAll('fieldset, main, .top').forEach(fs => {
     fs.addEventListener('pointermove', e => {
       const r = fs.getBoundingClientRect();
